@@ -21,6 +21,7 @@
 //
 package org.graphipedia.dataimport;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -74,8 +75,11 @@ public class LinkExtractor extends SimpleStaxParser {
         writer.writeStartElement("t");
         writer.writeCharacters(title);
         writer.writeEndElement();
-        
-        Set<String> links = parseLinks(text);
+
+        ArrayList<Set<String>> pageLinks = parseLinks(text);
+        Set<String> links = pageLinks.get(0);
+        Set<String> categories = pageLinks.get(1);
+
         links.remove(title);
         
         for (String link : links) {
@@ -83,14 +87,31 @@ public class LinkExtractor extends SimpleStaxParser {
             writer.writeCharacters(link);
             writer.writeEndElement();
         }
-        
+
+        for (String category : categories) {
+            writer.writeStartElement("c");
+            writer.writeCharacters(category);
+            writer.writeEndElement();
+        }
+
         writer.writeEndElement();
 
         pageCounter.increment();
     }
 
-    private Set<String> parseLinks(String text) {
+    private ArrayList<Set<String>> parseLinks(String text) {
+        // Since this covers everything well enough, I'll just merge the two instead of scanning every page twice (barf)
+        // because the !link.contains(":") looks like it's used to filter out Category links (among others)
+        // ok what is up with java and Pair types
+        ArrayList<Set<String>> pageLinks = new ArrayList<Set<String>>();
+
+        // HELP COMPUTER
         Set<String> links = new HashSet<String>();
+        Set<String> categories = new HashSet<String>();
+
+        pageLinks.add(links);
+        pageLinks.add(categories);
+
         if (text != null) {
             Matcher matcher = LINK_PATTERN.matcher(text);
             while (matcher.find()) {
@@ -100,10 +121,17 @@ public class LinkExtractor extends SimpleStaxParser {
                         link = link.substring(0, link.lastIndexOf('|'));
                     }
                     links.add(link);
+                } else if (link.startsWith("Category:")) {
+                    if (link.contains("|")) {
+                        link = link.substring(9, link.lastIndexOf('|'));
+                    } else {
+                        link = link.substring(9);
+                    }
+                    links.add(link);
                 }
             }
         }
-        return links;
+        return pageLinks;
     }
 
 }
