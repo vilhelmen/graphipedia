@@ -49,6 +49,7 @@ public class ImportGraph {
         ImportGraph importer = new ImportGraph(dataDir);
         importer.createNodes(inputFile);
         importer.createRelationships(inputFile);
+        // importer.createCategories(inputFile);
         importer.finish();
     }
 
@@ -70,6 +71,19 @@ public class ImportGraph {
         System.out.printf("\n%d links imported in %d seconds; %d broken links ignored\n",
                 relationshipCreator.getLinkCount(), elapsedSeconds, relationshipCreator.getBadLinkCount());
     }
+
+    // Off because I'm going to treat categories as pages for now
+    /*
+    public void createCategories(String fileName) throws Exception {
+        System.out.println("Importing categories...");
+        CategoryCreator categoryCreator = new categoryCreator(inserter, inMemoryIndex);
+        long startTime = System.currentTimeMillis();
+        categoryCreator.parse(fileName);
+        long elapsedSeconds = (System.currentTimeMillis() - startTime) / 1000;
+        System.out.printf("\n%d categories imported in %d seconds; %d broken links ignored\n",
+                relationshipCreator.getLinkCount(), elapsedSeconds, relationshipCreator.getBadLinkCount());
+    }
+    */
 
     public void finish() {
         inserter.createDeferredSchemaIndex(WikiLabel.Page).on("title").create();
